@@ -1,0 +1,22 @@
+diff --git a/media/audio/audio_manager.cc b/media/audio/audio_manager.cc
+index 3ff74a5b3c169..58ee98f4240f3 100644
+--- a/media/audio/audio_manager.cc
++++ b/media/audio/audio_manager.cc
+@@ -26,6 +26,8 @@
+ #include "base/win/scoped_com_initializer.h"
+ #endif
+ 
++#include "electron/shell/common/application_info.h"
++
+ namespace media {
+ namespace {
+ 
+@@ -62,7 +64,7 @@ class AudioManagerHelper {
+   std::unique_ptr<base::win::ScopedCOMInitializer> com_initializer_for_testing_;
+ #endif
+ 
+-  std::string app_name_;
++  std::string app_name_ = electron::GetApplicationName();
+ };
+ 
+ AudioManagerHelper* GetHelper() {
