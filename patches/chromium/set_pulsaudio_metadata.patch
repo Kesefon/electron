@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: kesefon <kesefon@pm.me>
+Date: Thu, 25 Dec 2025 06:25:59 +0100
+Subject: set pulsaudio metadata
+
+
+diff --git a/media/audio/audio_manager.cc b/media/audio/audio_manager.cc
+index c9ef1258d47e77a7316dab02c0f960e4ce428112..2a4e397813653fa9050c67028132e07a5ae454a7 100644
+--- a/media/audio/audio_manager.cc
++++ b/media/audio/audio_manager.cc
+@@ -27,6 +27,8 @@
+ #include "base/win/scoped_com_initializer.h"
+ #endif
+ 
++#include "electron/shell/common/application_info.h"
++
+ namespace media {
+ namespace {
+ 
+@@ -55,7 +57,12 @@ class AudioManagerHelper {
+ #endif
+ 
+   void set_app_name(const std::string& app_name) { app_name_ = app_name; }
+-  const std::string& app_name() const { return app_name_; }
++  const std::string& app_name() {
++    if(app_name_.empty()) {
++      app_name_ = electron::GetPossiblyOverriddenApplicationName();
++    }
++    return app_name_;
++  }
+ 
+   FakeAudioLogFactory fake_log_factory_;
+ 
+diff --git a/media/audio/pulse/pulse_util.cc b/media/audio/pulse/pulse_util.cc
+index a08e42a464a3894cbf2b8e3cf8a320a33423b719..b0b0b3ab94a9e1ee87ca70098b28ea23709598ad 100644
+--- a/media/audio/pulse/pulse_util.cc
++++ b/media/audio/pulse/pulse_util.cc
+@@ -29,6 +29,8 @@ using media_audio_pulse::InitializeStubs;
+ using media_audio_pulse::StubPathMap;
+ #endif  // defined(DLOPEN_PULSEAUDIO)
+ 
++#include "electron/shell/common/platform_util.h"
++
+ namespace media {
+ 
+ namespace pulse {
+@@ -465,7 +467,7 @@ bool CreateInputStream(pa_threaded_mainloop* mainloop,
+   // tells PulseAudio what the stream icon should be.
+   ScopedPropertyList property_list;
+   pa_proplist_sets(property_list.get(), PA_PROP_APPLICATION_ICON_NAME,
+-                   kBrowserDisplayName);
++                   platform_util::GetXdgAppId().empty()? kBrowserDisplayName : platform_util::GetXdgAppId().c_str());
+   *stream = pa_stream_new_with_proplist(context, "RecordStream",
+                                         &sample_specifications, map,
+                                         property_list.get());
+@@ -575,7 +577,7 @@ bool CreateOutputStream(raw_ptr<pa_threaded_mainloop>* mainloop,
+   // tell PulseAudio what the stream icon should be.
+   ScopedPropertyList property_list;
+   pa_proplist_sets(property_list.get(), PA_PROP_APPLICATION_ICON_NAME,
+-                   kBrowserDisplayName);
++                   platform_util::GetXdgAppId().empty()? kBrowserDisplayName : platform_util::GetXdgAppId().c_str());
+   *stream = pa_stream_new_with_proplist(
+       *context, "Playback", &sample_specifications, map, property_list.get());
+   RETURN_ON_FAILURE(*stream, "failed to create PA playback stream");
